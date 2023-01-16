@@ -19,6 +19,47 @@ mongoose
 const app = express();
 app.use(express.json());
 
+app.post("/login", async (req, res) => {
+  try {
+    const user = await UserModel.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(404).json({
+        message: "Некорректний логін або пароль",
+      });
+    }
+
+    const isValidPass = await bcrypt.compare(
+      req.body.password,
+      user._doc.passwordHash
+    );
+
+    if (!isValidPass) {
+      return res.status(404).json({
+        message: "Некорректний логін або пароль",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        _id: user._id,
+      },
+      "secret123",
+      {
+        expiresIn: "30d",
+      }
+    );
+    const { passwordHash, ...userData } = user._doc;
+    res.json({
+      ...userData,
+      token,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Не вдалось авторизуватись",
+    });
+  }
+});
+
 app.post("/register", registerValitadion, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -29,13 +70,13 @@ app.post("/register", registerValitadion, async (req, res) => {
 
     const password = req.body.password;
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const hash = await bcrypt.hash(password, salt);
 
     const doc = new UserModel({
       email: req.body.email,
       fullName: req.body.fullName,
       avatarUrl: req.body.avatarUrl,
-      passwordHash,
+      passwordHash: hash,
     });
 
     const user = await doc.save();
@@ -50,8 +91,10 @@ app.post("/register", registerValitadion, async (req, res) => {
       }
     );
 
+    const { passwordHash, ...userData } = user._doc;
+
     res.json({
-      ...user,
+      ...userData,
       token,
     });
   } catch (err) {
