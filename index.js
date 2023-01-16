@@ -1,27 +1,34 @@
 import express from "express";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { registerValitadion } from "./validations/auth.js";
+import {validationResult} from "express-validator";
 
-const app = express();
-app.use(express.json())
-app.get("/", (req, res) => {
-    res.send("Hello world");
+mongoose.set("strictQuery", false);
+mongoose.connect("mongodb+srv://andriiadm:Pa3wtj1X@cluster0.wyiedjg.mongodb.net/test").then(() => {
+  console.log("DB OK");
+}).catch((error) => {
+  console.log("DB ERROR", error);
 });
 
-app.post("/login", (req, res) => {
-    console.log(req.body);
+const app = express();
+app.use(express.json());
 
-    const token = jwt.sign({
-        email: req.body.email,
-        fullName: "Андрій Іванов"
-    }, "secret123");
+app.post("/register", registerValitadion, (req, res) => {
+  const errors = validationResult(req);
 
-    res.json({success: true, token});
+  if (!errors.isEmpty()) {
+    return res.status(400).json(errors.array());
+  }
 
+  res.json({
+    success: true,
+  })
 });
 
 app.listen(8080, (err) => {
-    if (err) {
-        return console.log(err);
-    }
-    console.log("Server OK");
+  if (err) {
+    return console.log(err);
+  }
+  console.log("Server OK");
 });
