@@ -5,15 +5,16 @@ import {
   loginValidation,
   postCreateValidation,
 } from "./validations/validations.js";
-import checkAuth from "./utils/checkAuth.js";
-import * as UserController from "./controllers/UserController.js";
-import * as PostController from "./controllers/PostController.js";
+import { UserController, PostController } from "./controllers/index.js";
+import { handleValidationErrors, checkAuth } from "./utils/index.js";
 import multer from "multer";
-import handleValidationErrors from "./utils/handleValidationErrors.js";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 mongoose.set("strictQuery", false);
 mongoose
-  .connect("mongodb+srv://andriiadm:Pa3wtj1X@cluster0.wyiedjg.mongodb.net/blog")
+  .connect(process.env.DB_CONNECTION)
   .then(() => {
     console.log("DB OK");
   })
