@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { registerValitadion } from "./validations/auth.js";
 import { validationResult } from "express-validator";
 import UserModel from "./models/User.js";
+import checkAuth from "./utils/checkAuth.js";
 
 mongoose.set("strictQuery", false);
 mongoose
@@ -34,7 +35,7 @@ app.post("/login", async (req, res) => {
     );
 
     if (!isValidPass) {
-      return res.status(404).json({
+      return res.status(400).json({
         message: "Некорректний логін або пароль",
       });
     }
@@ -102,6 +103,14 @@ app.post("/register", registerValitadion, async (req, res) => {
       message: "Реєстрація невдала",
     });
   }
+});
+
+app.get("/about", checkAuth, (req, res) => {
+  try {
+    res.json({
+      success: true,
+    });
+  } catch (err) {}
 });
 
 app.listen(8080, (err) => {
